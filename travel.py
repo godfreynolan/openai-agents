@@ -1,8 +1,3 @@
-# set up travel agent with a function tool to get travel information and a function tool to get car hire information
-# add in the API calls to get the information
-# use the code in helloworld 
-# add a guardrail
-
 import os
 import asyncio
 from agents import Agent, Runner, function_tool
@@ -33,49 +28,43 @@ def get_flight(city: str) -> str:
 
 
 @function_tool
-def get_carhire(city: str) -> str:
-    response = amadeus.shopping.car_rental_offers.get(
-        pickupLocationCode='IAH',
-        pickupDateTime='2025-05-19T10:00:00',
-        returnDateTime='2025-05-22T18:00:00',
-    )
-    offers = response.data
-    print(offers[0])
+def get_hotel(city: str) -> str:
+    response = amadeus.reference_data.locations.hotels.by_city.get(cityCode='PAR')
+    # print(response.data[0])
     return {
-        "city": city,
-        "carHire": "Enterprise car hire rental at Houston airport",
-        "description": "Car hire details, including price and availability - $99 per day",
-    }
+        "hotelName": response.data[0]['chainCode'], 
+        "hotelAddress": response.data[0]['name']
+    }   
 
 
 agent = Agent(
     name="Travel agent",
-    instructions="You can only provide flights and car rental information.",
-    tools=[get_carhire, get_flight],
+    instructions="You can only provide flights and hotel information.",
+    tools=[get_hotel, get_flight],
 )
 
-carhire_agent = Agent(
-    name="Car Rental agent",
-    instructions="You are a helpful care rental assitant only. You know nothing about flight information.",
-    tools=[get_carhire]
+hotel_agent = Agent(
+    name="Hotel agent",
+    instructions="You are a helpful hotel booking assitant only. You know nothing about flight information.",
+    tools=[get_hotel]
 )
 
 airline_agent = Agent(
     name="Airline agent",
-    instructions="You only a helpful flight assistant. You know nothing about car rental information.",
+    instructions="You only a helpful flight assistant. You know nothing about booking hotels.",
     tools=[get_flight]
 )
 
 triage_agent = Agent(
     name="Triage agent",
-    instructions="Handoff to the appropriate agent based on the whether they want flight information or car rental information",
-    handoffs=[airline_agent, carhire_agent]
+    instructions="Handoff to the appropriate agent based on the whether they want flight information or hotel booking information",
+    handoffs=[airline_agent, hotel_agent]
 )
 
 
 async def main():
-    result = await Runner.run(triage_agent, input="Please can you give me flight information from Detroit to Houston?")
-    #result = await Runner.run(triage_agent, input="Please can you give me information about renting a car in Houston?")
+    #result = await Runner.run(triage_agent, input="Please can you give me flight information from Detroit to Houston?")
+    result = await Runner.run(triage_agent, input="Where can I stay in Paris?")
     print(result.final_output)
 
 
