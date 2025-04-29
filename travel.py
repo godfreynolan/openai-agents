@@ -10,11 +10,21 @@ amadeus = Client(
     client_secret=os.getenv("AMADEUS_CLIENT_SECRET")
 )
 
+CITY_TO_IATA = {
+    "Houston": "IAH",
+    "Detroit": "DTW",
+    "New York": "JFK",
+    "Los Angeles": "LAX",
+    "Paris": "PAR",
+    # …
+}
+
 @function_tool
 def get_flight(city: str) -> str:
+    dest_code = CITY_TO_IATA.get(city)
     response = amadeus.shopping.flight_offers_search.get(
         originLocationCode='DTW',
-        destinationLocationCode='IAH',
+        destinationLocationCode={dest_code},
         departureDate='2025-05-19',
         adults=1)
     first_offer = response.data[0]  # Get the first flight result
@@ -29,7 +39,8 @@ def get_flight(city: str) -> str:
 
 @function_tool
 def get_hotel(city: str) -> str:
-    response = amadeus.reference_data.locations.hotels.by_city.get(cityCode='PAR')
+    dest_code = CITY_TO_IATA.get(city)
+    response = amadeus.reference_data.locations.hotels.by_city.get(cityCode=dest_code)
     # print(response.data[0])
     return {
         "hotelName": response.data[0]['chainCode'], 
@@ -63,7 +74,7 @@ triage_agent = Agent(
 
 
 async def main():
-    #result = await Runner.run(triage_agent, input="Please can you give me flight information from Detroit to Houston?")
+    # result = await Runner.run(triage_agent, input="Please can you give me flight information from DTW to IAH?")
     result = await Runner.run(triage_agent, input="Where can I stay in Paris?")
     print(result.final_output)
 
