@@ -1,6 +1,6 @@
 import os
 import asyncio
-from agents import Agent, Runner, function_tool
+from agents import Agent, Runner, function_tool, WebSearchTool
 from amadeus import Client, ResponseError
 from dotenv import load_dotenv
 load_dotenv()
@@ -66,6 +66,12 @@ airline_agent = Agent(
     tools=[get_flight]
 )
 
+airline_agent = Agent(
+    name="Itinerary agent",
+    instructions="You only a helpful assistant that creates itineraries for vists to cities. You know nothing about booking hotels or flights.",
+    tools=[WebSearchTool()]
+)
+
 triage_agent = Agent(
     name="Triage agent",
     instructions="Handoff to the appropriate agent based on the whether they want flight information or hotel booking information",
@@ -75,7 +81,9 @@ triage_agent = Agent(
 
 async def main():
     # result = await Runner.run(triage_agent, input="Please can you give me flight information from DTW to IAH?")
-    result = await Runner.run(triage_agent, input="Where can I stay in Paris?")
+    # result = await Runner.run(triage_agent, input="Where can I stay in Paris?")
+    result = await Runner.run(triage_agent, input="Give me an itinerary for a weekend trip in Dublin?")
+
     print(result.final_output)
 
 
